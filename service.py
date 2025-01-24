@@ -48,7 +48,7 @@ class Service(pulumi.ComponentResource):
             raise ValueError("Missing required configuration value `gcp:region`")
 
         self.artifact_registry_repo = artifactregistry.Repository(
-            "artifact-repo",
+            f"{name}-artifact-repo",
             format="DOCKER",
             repository_id=f"{name}-repo",
             opts=pulumi.ResourceOptions(parent=self),
