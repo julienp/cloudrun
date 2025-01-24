@@ -4,19 +4,12 @@ from typing import Optional
 import pulumi
 import pulumi_command as command
 import pulumi_docker_build as docker_build
-from pulumi_gcp import (
-    artifactregistry,
-    cloudrun,
-)
+from pulumi_gcp import artifactregistry, cloudrun
+from pulumi_gcp import config as gcp_config
 
 
 @dataclass
 class ServiceArgs:
-    project: pulumi.Input[str]
-    """The project to deploy the service to. The project requires the Artifact
-    Registry API and the Cloud Run API to be enabled."""
-    region: pulumi.Input[str]
-    """The region to deploy the service to."""
     app_path: Optional[pulumi.Input[str]] = "./app"
     """The path to the application source code."""
     image_name: Optional[pulumi.Input[str]] = "image"
@@ -49,10 +42,13 @@ class Service(pulumi.ComponentResource):
         opts: Optional[pulumi.ResourceOptions] = None,
     ):
         super().__init__("cloudrun:index:Service", name, {}, opts)
+        if not gcp_config.project:
+            raise ValueError("Missing required configuration value `gcp:project`")
+        if not gcp_config.region:
+            raise ValueError("Missing required configuration value `gcp:region`")
+
         self.artifact_registry_repo = artifactregistry.Repository(
             "artifact-repo",
-            project=args.project,
-            location=args.region,
             format="DOCKER",
             repository_id=f"{name}-repo",
             opts=pulumi.ResourceOptions(parent=self),
@@ -67,9 +63,9 @@ class Service(pulumi.ComponentResource):
             f"{name}-image",
             tags=[
                 pulumi.Output.concat(
-                    args.region,
+                    gcp_config.region,
                     "-docker.pkg.dev/",
-                    args.project,
+                    gcp_config.project,
                     "/",
                     self.artifact_registry_repo.name,
                     "/",
@@ -80,7 +76,7 @@ class Service(pulumi.ComponentResource):
             registries=[
                 {
                     "address": pulumi.Output.concat(
-                        "https://", args.region, "-docker.pkg.dev"
+                        "https://", gcp_config.region, "-docker.pkg.dev"
                     ),
                     "password": docker_token,
                     "username": "oauth2accesstoken",
@@ -97,7 +93,7 @@ class Service(pulumi.ComponentResource):
         # Create a Cloud Run service definition.
         self.service = cloudrun.Service(
             f"{name}-service",
-            location=args.region,
+            location=gcp_config.region,
             template={
                 "spec": {
                     "containers": [
@@ -133,7 +129,7 @@ class Service(pulumi.ComponentResource):
         # Create an IAM member to make the service publicly accessible.
         self.invoker = cloudrun.IamMember(
             f"{name}-invoker",
-            location=args.region,
+            location=gcp_config.region,
             service=self.service.name,
             role="roles/run.invoker",
             member="allUsers",
