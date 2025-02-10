@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, TypedDict
 
 import pulumi
 import pulumi_command as command
@@ -9,18 +9,18 @@ from pulumi_gcp import config as gcp_config
 
 
 @dataclass
-class ServiceArgs:
-    app_path: Optional[pulumi.Input[str]] = "./app"
+class ServiceArgs(TypedDict):
+    app_path: Optional[pulumi.Input[str]]
     """The path to the application source code."""
-    image_name: Optional[pulumi.Input[str]] = "image"
+    image_name: Optional[pulumi.Input[str]]
     """The name of the Docker image."""
-    container_port: Optional[pulumi.Input[int]] = 8080
+    container_port: Optional[pulumi.Input[int]]
     """The port the container listens on."""
-    cpu: Optional[pulumi.Input[int]] = 1
+    cpu: Optional[pulumi.Input[int]]
     """The CPU limit for the container."""
-    memory: Optional[pulumi.Input[str]] = "1Gi"
+    memory: Optional[pulumi.Input[str]]
     """The memory limit for the container."""
-    concurrency: Optional[pulumi.Input[int]] = 3
+    concurrency: Optional[pulumi.Input[int]]
     """The number of concurrent containers to run."""
 
 
@@ -62,7 +62,7 @@ class Service(pulumi.ComponentResource):
         self.image = docker_build.Image(
             f"{name}-image",
             tags=[
-                _docker_tag(self.artifact_registry_repo, args.image_name or "image"),
+                _docker_tag(self.artifact_registry_repo, args["image_name"] or "image"),
             ],
             registries=[
                 {
@@ -74,7 +74,7 @@ class Service(pulumi.ComponentResource):
                 }
             ],
             context=docker_build.BuildContextArgs(
-                location=args.app_path or "./app",
+                location=args["app_path"] or "./app",
             ),
             platforms=[docker_build.Platform.LINUX_AMD64],
             push=True,  # TODO: this is required, but the argument types don't reflect that, bug?
@@ -92,26 +92,26 @@ class Service(pulumi.ComponentResource):
                             "image": self.image.ref,
                             "resources": {
                                 "limits": {
-                                    "memory": args.memory or "1Gi",
+                                    "memory": args["memory"] or "1Gi",
                                     "cpu": pulumi.Output.from_input(
-                                        args.cpu or 1
+                                        args["cpu"] or 1
                                     ).apply(lambda x: str(x)),
                                 },
                             },
                             "ports": [
-                                {"container_port": args.container_port or 8080},
+                                {"container_port": args["container_port"] or 8080},
                             ],
                             "envs": [
                                 {
                                     "name": "FLASK_RUN_PORT",
                                     "value": pulumi.Output.from_input(
-                                        args.container_port or 8080
+                                        args["container_port"] or 8080
                                     ).apply(lambda x: str(int(x))),
                                 },
                             ],
                         },
                     ],
-                    "container_concurrency": args.concurrency or 3,
+                    "container_concurrency": args["concurrency"] or 3,
                 },
             },
             opts=pulumi.ResourceOptions(parent=self),
