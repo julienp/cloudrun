@@ -129,7 +129,17 @@ class Service(pulumi.ComponentResource):
 
         self.url = self.service.statuses.apply(lambda statuses: statuses[0].url)
         self.image_ref = self.image.ref
-        self.register_outputs({})
+        # By registering the outputs on which the component depends, we ensure
+        # that the Pulumi CLI will wait for all the outputs to be created before
+        # considering the component itself to have been created.
+        self.register_outputs(
+            {
+                "invoker": self.invoker,
+                "service": self.service,
+                "image": self.image,
+                "artifactRegistryRepo": self.artifact_registry_repo,
+            }
+        )
 
 
 def _docker_tag(
