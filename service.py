@@ -138,7 +138,7 @@ def _docker_tag(
     return pulumi.Output.concat(
         repo.location,
         "-docker.pkg.dev/",
-        repo.project.project,
+        repo.project,
         "/",
         repo.name,
         "/",
