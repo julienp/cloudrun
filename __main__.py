@@ -1,5 +1,7 @@
-from component import Metadata, componentProviderHost
+from pulumi.provider.experimental import component_provider_host
 
-componentProviderHost(
-    Metadata(name="cloudrun", version="1.2.7", display_name="CloudRun")
-)
+if __name__ == "__main__"
+    # Call the component provider host. This will discover any ComponentResource
+    # subclasses in this package, infer their schema and host a provider that
+    # allows constructing these components from a Pulumi program.
+    component_provider_host()

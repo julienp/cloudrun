@@ -1,5 +1,4 @@
-pulumi==3.147.0
-pulumi_gcp==8.15.0
-pulumi_docker_build==0.0.9
-pulumi_command==1.0.1
-pulumi-components-test==0.0.7
+pulumi>=3.149,<4.0
+pulumi_gcp~=8.15
+pulumi_docker_build~=0.0.10
+pulumi_command~=1.0

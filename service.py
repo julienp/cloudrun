@@ -62,16 +62,7 @@ class Service(pulumi.ComponentResource):
         self.image = docker_build.Image(
             f"{name}-image",
             tags=[
-                pulumi.Output.concat(
-                    gcp_config.region,
-                    "-docker.pkg.dev/",
-                    gcp_config.project,
-                    "/",
-                    self.artifact_registry_repo.name,
-                    "/",
-                    args.image_name or "image",
-                    ":latest",
-                ),
+                _docker_tag(self.artifact_registry_repo, args.image_name or "image"),
             ],
             registries=[
                 {
@@ -139,3 +130,18 @@ class Service(pulumi.ComponentResource):
         self.url = self.service.statuses.apply(lambda statuses: statuses[0].url)
         self.image_ref = self.image.ref
         self.register_outputs({})
+
+
+def _docker_tag(
+    repo: artifactregistry.Repository, image_name: pulumi.Input[str]
+) -> pulumi.Output[str]:
+    return pulumi.Output.concat(
+        repo.location,
+        "-docker.pkg.dev/",
+        repo.project.project,
+        "/",
+        repo.name,
+        "/",
+        image_name,
+        ":latest",
+    )
