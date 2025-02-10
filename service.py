@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Optional, TypedDict
 
 import pulumi
@@ -8,7 +7,6 @@ from pulumi_gcp import artifactregistry, cloudrun
 from pulumi_gcp import config as gcp_config
 
 
-@dataclass
 class ServiceArgs(TypedDict):
     app_path: Optional[pulumi.Input[str]]
     """The path to the application source code."""
