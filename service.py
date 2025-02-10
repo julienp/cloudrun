@@ -60,7 +60,9 @@ class Service(pulumi.ComponentResource):
         self.image = docker_build.Image(
             f"{name}-image",
             tags=[
-                _docker_tag(self.artifact_registry_repo, args["image_name"] or "image"),
+                _docker_tag(
+                    self.artifact_registry_repo, args.get("image_name") or "image"
+                )
             ],
             registries=[
                 {
@@ -72,7 +74,7 @@ class Service(pulumi.ComponentResource):
                 }
             ],
             context=docker_build.BuildContextArgs(
-                location=args["app_path"] or "./app",
+                location=args.get("app_path") or "./app",
             ),
             platforms=[docker_build.Platform.LINUX_AMD64],
             push=True,  # TODO: this is required, but the argument types don't reflect that, bug?
@@ -90,26 +92,26 @@ class Service(pulumi.ComponentResource):
                             "image": self.image.ref,
                             "resources": {
                                 "limits": {
-                                    "memory": args["memory"] or "1Gi",
+                                    "memory": args.get("memory") or "1Gi",
                                     "cpu": pulumi.Output.from_input(
-                                        args["cpu"] or 1
+                                        args.get("cpu") or 1
                                     ).apply(lambda x: str(x)),
                                 },
                             },
                             "ports": [
-                                {"container_port": args["container_port"] or 8080},
+                                {"container_port": args.get("container_port") or 8080},
                             ],
                             "envs": [
                                 {
                                     "name": "FLASK_RUN_PORT",
                                     "value": pulumi.Output.from_input(
-                                        args["container_port"] or 8080
+                                        args.get("container_port") or 8080
                                     ).apply(lambda x: str(int(x))),
                                 },
                             ],
                         },
                     ],
-                    "container_concurrency": args["concurrency"] or 3,
+                    "container_concurrency": args.get("concurrency") or 3,
                 },
             },
             opts=pulumi.ResourceOptions(parent=self),
