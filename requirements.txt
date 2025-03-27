@@ -1,4 +1,4 @@
-pulumi>=3.149,<4.0
+pulumi>=3.159,<4.0
 pulumi_gcp~=8.15
 pulumi_docker_build~=0.0.10
 pulumi_command~=1.0
